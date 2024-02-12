@@ -1,6 +1,7 @@
 <script lang="ts">
-	let title = '';
-	let content = '';
+	import CreateNote from './CreateNote.svelte';
+	import Note from './Note.svelte';
+
 	let id = 0;
 
 	let notes = [
@@ -24,14 +25,9 @@
 		}
 	];
 
-	function deleteNote(noteId: number) {
-		const filteredNotes = notes.filter((n) => n.id !== noteId);
-		notes = filteredNotes;
-	}
-	function createNote() {
+	function createNote(event) {
 		const newNote: (typeof notes)[0] = {
-			content,
-			title,
+			...event.detail,
 			id,
 			isEditing: false
 		};
@@ -42,63 +38,31 @@
 		title = '';
 		content = '';
 	}
-	function prepareNoteForEdit(note: (typeof notes)[0]) {
-		note.isEditing = !note.isEditing;
+
+	function deleteNote(event) {
+		const filteredNotes = notes.filter((n) => n.id !== event.detail.noteId);
+		notes = filteredNotes;
+	}
+
+	function finishEdit(event) {
+		event.detail.note.isEditing = false;
 		notes = notes;
 	}
-	function finishEdit(note: (typeof notes)[0]) {
-		note.isEditing = false;
+	function prepareNoteForEdit(event) {
+		event.detail.note.isEditing = !event.detail.note.isEditing;
 		notes = notes;
 	}
 </script>
 
 <section>
-	<div>
-		<form
-			on:submit|preventDefault={createNote}
-			style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; width: 50%"
-		>
-			<p>Create note</p>
-			<input type="text" bind:value={title} placeholder="Title" />
-			<textarea bind:value={content} placeholder="Content" />
-			<input type="submit" value="Save" />
-		</form>
-	</div>
+	<CreateNote on:createNoteDispatched={createNote} />
 
 	{#each notes as note}
-		<div style="border: 1px solid #dedede; padding: 8px">
-			{#if note.isEditing}
-				<form
-					on:submit|preventDefault={() => finishEdit(note)}
-					style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; width: 50%"
-				>
-					<input
-						type="text"
-						value={note.title}
-						on:change={(e) => (note.title = e.currentTarget?.value)}
-					/>
-					<textarea
-						value={note.content}
-						on:change={(e) => (note.content = e.currentTarget?.value)}
-					/>
-
-					<input type="submit" value="Update" />
-				</form>
-			{:else}
-				<div>
-					<h5>
-						{note.title}
-					</h5>
-					<p>
-						{note.content}
-					</p>
-				</div>
-			{/if}
-
-			<button on:click={() => prepareNoteForEdit(note)}>
-				{note.isEditing ? 'Cancel' : 'Edit'}
-			</button>
-			<button on:click={() => deleteNote(note.id)}> Delete </button>
-		</div>
+		<Note
+			{note}
+			on:deleteNoteDispatched={deleteNote}
+			on:finishEditNoteDispatched={finishEdit}
+			on:prepareNoteForEditDispatched={prepareNoteForEdit}
+		/>
 	{/each}
 </section>
