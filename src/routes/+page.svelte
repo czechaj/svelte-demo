@@ -1,59 +1,104 @@
-<script>
-	import Counter from './Counter.svelte';
-	import welcome from '$lib/images/svelte-welcome.webp';
-	import welcome_fallback from '$lib/images/svelte-welcome.png';
+<script lang="ts">
+	let title = '';
+	let content = '';
+	let id = 0;
+
+	let notes = [
+		{
+			title: 'test',
+			content: 'content',
+			id: 1,
+			isEditing: false
+		},
+		{
+			title: 'test2',
+			content: 'content2',
+			id: 2,
+			isEditing: false
+		},
+		{
+			title: 'test3',
+			content: 'content3',
+			id: 3,
+			isEditing: false
+		}
+	];
+
+	function deleteNote(noteId: number) {
+		const filteredNotes = notes.filter((n) => n.id !== noteId);
+		notes = filteredNotes;
+	}
+	function createNote() {
+		const newNote: (typeof notes)[0] = {
+			content,
+			title,
+			id,
+			isEditing: false
+		};
+		id++;
+
+		notes = [...notes, newNote];
+
+		title = '';
+		content = '';
+	}
+	function prepareNoteForEdit(note: (typeof notes)[0]) {
+		note.isEditing = !note.isEditing;
+		notes = notes;
+	}
+	function finishEdit(note: (typeof notes)[0]) {
+		note.isEditing = false;
+		notes = notes;
+	}
 </script>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-</svelte:head>
-
 <section>
-	<h1>
-		<span class="welcome">
-			<picture>
-				<source srcset={welcome} type="image/webp" />
-				<img src={welcome_fallback} alt="Welcome" />
-			</picture>
-		</span>
+	<div>
+		<form
+			on:submit|preventDefault={createNote}
+			style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; width: 50%"
+		>
+			<p>Create note</p>
+			<input type="text" bind:value={title} placeholder="Title" />
+			<textarea bind:value={content} placeholder="Content" />
+			<input type="submit" value="Save" />
+		</form>
+	</div>
 
-		to your new<br />SvelteKit app
-	</h1>
+	{#each notes as note}
+		<div style="border: 1px solid #dedede; padding: 8px">
+			{#if note.isEditing}
+				<form
+					on:submit|preventDefault={() => finishEdit(note)}
+					style="margin-bottom: 30px; display: flex; flex-direction: column; gap: 10px; width: 50%"
+				>
+					<input
+						type="text"
+						value={note.title}
+						on:change={(e) => (note.title = e.currentTarget?.value)}
+					/>
+					<textarea
+						value={note.content}
+						on:change={(e) => (note.content = e.currentTarget?.value)}
+					/>
 
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
+					<input type="submit" value="Update" />
+				</form>
+			{:else}
+				<div>
+					<h5>
+						{note.title}
+					</h5>
+					<p>
+						{note.content}
+					</p>
+				</div>
+			{/if}
 
-	<Counter />
+			<button on:click={() => prepareNoteForEdit(note)}>
+				{note.isEditing ? 'Cancel' : 'Edit'}
+			</button>
+			<button on:click={() => deleteNote(note.id)}> Delete </button>
+		</div>
+	{/each}
 </section>
-
-<style>
-	section {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		flex: 0.6;
-	}
-
-	h1 {
-		width: 100%;
-	}
-
-	.welcome {
-		display: block;
-		position: relative;
-		width: 100%;
-		height: 0;
-		padding: 0 0 calc(100% * 495 / 2048) 0;
-	}
-
-	.welcome img {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		top: 0;
-		display: block;
-	}
-</style>
